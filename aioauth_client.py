@@ -144,17 +144,16 @@ class Client(object, metaclass=ClientRegistry):
             loop=loop, conn_timeout=timeout, read_timeout=timeout)
         try:
             async with session.request(method, url, **kwargs) as response:
-
-                if response.status / 100 > 2:
-                    raise web.HTTPBadRequest(
-                        reason='HTTP status code: %s' % response.status)
-
                 if 'json' in response.headers.get('CONTENT-TYPE'):
                     data = await response.json()
                 else:
                     data = await response.text()
                     data = dict(parse_qsl(data))
 
+                if response.status // 100 > 2:
+                    raise web.HTTPBadRequest(
+                        reason=f'HTTP status code: {response.status}, data: {data}')
+		
                 return data
 
         except asyncio.TimeoutError:
